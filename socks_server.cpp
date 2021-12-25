@@ -110,13 +110,13 @@ private:
 		servsock.async_connect(ep, 
 				[this, self](const boost::system::error_code &err) {
 					if (!err) {
-						cerr << "connect\n";
+						//cerr << "connect\n";
 						//cout << servsock->remote_endpoint().address().to_string() << ' ' << servsock->remote_endpoint().port() << '\n';
 						//cout << servsock->local_endpoint().address().to_string() << ' ' << servsock->local_endpoint().port() << '\n';
 						readServer();
 						readClient();
 					} else {
-						cerr << err.message() << '\n';
+						//cerr << err.message() << '\n';
 					}
 				});
 	}
@@ -126,7 +126,7 @@ private:
 				[this, self] (const boost::system::error_code &ec, tcp::socket sock ) {
 					if (!ec) {
 						//check ip
-						cerr << "bind\n";
+						//cerr << "bind\n";
 						uint8_t reply[8];
 						memset(reply, 0, sizeof(reply));
 						if (socket_.remote_endpoint().address().to_string() == res.ip) {
@@ -140,7 +140,7 @@ private:
 						readServer();
 						readClient();
 					} else {
-						cerr << ec.message() << '\n';
+						//cerr << ec.message() << '\n';
 					}
 				});
 	}
@@ -156,9 +156,9 @@ private:
 						//cerr << "readdone\n";
 						writeClient(length);
 					} else {
-						cerr << ec.message() << '\n';
+						//cerr << ec.message() << '\n';
 						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
-						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						//socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
@@ -169,8 +169,8 @@ private:
 					if (!ec) {
 						readServer();
 					} else {
-						cerr << "write CLient " << ec.message() << '\n';
-						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						//cerr << "write CLient " << ec.message() << '\n';
+						//servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
@@ -183,8 +183,8 @@ private:
 					if (!ec) {
 						writeServer(length);
 					} else {
-						cerr << ec.message() << '\n';
-						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						//cerr << ec.message() << '\n';
+						//servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
@@ -198,9 +198,9 @@ private:
 					if (!ec) {
 						readClient();
 					} else {
-						cerr << ec.message() << '\n';
+						//cerr << ec.message() << '\n';
 						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
-						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						//socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
