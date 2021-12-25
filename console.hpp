@@ -25,7 +25,7 @@ struct host {
 	string hname;
 	int port;
 	string fname;
-	
+	string sh, sp;
 	void print() {
 		cerr << "host: " << hname << '\n';
 		cerr << "port: " << port << '\n';
@@ -45,13 +45,16 @@ vector<host> parse(string input) {
 		end = input.find("&", start);
 	}
 	res.push_back(input.substr(start));
-	for (int i = 0; i < res.size();) {
+	int i;
+	for (i = 0; i < 15;) {
 		struct host tmp;
 		tmp.hname = res[i++].substr(3);
 		tmp.port = atoi(res[i++].substr(3).c_str());
 		tmp.fname = res[i++].substr(3);
 		out.push_back(tmp);
 	}
+	out[0].sh = res[i++].substr(3);
+	out[0].sp = res[i++].substr(3);
 	return out;
 }
 

@@ -1,6 +1,8 @@
 #include "console.hpp"
 
 
+boost::asio::io_context _context;
+boost::system::error_code error;
 class client 
 	:public enable_shared_from_this<client>
 {
@@ -9,10 +11,38 @@ public:
 	
 	void start() {
 		// create template
+		int permit = Request();
+		if (permit == 0) 
+			return;
 		ReadFile();
 		ReadPrompt();
 	}
 private:
+	int Request() {
+		uint8_t req[9];
+		memset(req, 0, sizeof(req));
+		req[0] = 4;
+		req[1] = 1;
+		req[2] = host_.port / 256;
+		req[3] = host_.port % 256;
+		tcp::resolver resolv(_context);
+		tcp::resolver::results_type res = resolv.resolve(host_.hname, to_string(host_.port), error);
+		for (auto it = res.begin(); it != res.end(); it++) {
+			array<unsigned char, 4> ip = it->endpoint().address().to_v4().to_bytes();
+			for (int i = 0; i < 4; i++) {
+				req[4+i] = int(ip[i]);
+			}	
+		}
+		socket_->write_some(boost::asio::buffer(req, 9));
+		socket_->read_some(boost::asio::buffer(buf, MAXLEN));
+		int stat = int(buf[1]);
+		if (stat == 91) {
+			boost::system::error_code ec;
+			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			return 0;
+		}
+		return 1;
+	}
 	void ReadPrompt () {
 		auto self(shared_from_this());
 		memset(buf, 0, sizeof(buf));
@@ -84,35 +114,30 @@ private:
 int main () {
 	string query = string(getenv("QUERY_STRING"));
 	vector<host> hosts = parse(query);
-	boost::asio::io_context _context;
-	tcp::resolver resolver_(_context);
 
+
+	tcp::resolver resolver_(_context);
+	string sh = hosts[0].sh;
+	string sp = hosts[0].sp;
 	cout << "Content-Type: text/html\r\n\r\n";
 	scope(hosts);
+	tcp::resolver::results_type res = resolver_.resolve(sh, sp, error);
+
+	for (auto it = res.begin(); it != res.end(); it++) {
+		sh = it->endpoint().address().to_string();
+	}
 
 	for (int i = 0; i < 5; i++) {
 		if (hosts[i].hname.empty())
 			break;
 		shared_ptr<tcp::socket> sock = make_shared<tcp::socket>(_context);
-		resolver_.async_resolve(hosts[i].hname, to_string(hosts[i].port),
-				[hosts, i, sock](const boost::system::error_code& ec, tcp::resolver::results_type results) 
-				{
-					if (!ec) {
-						
-						for (auto it = results.begin(); it != results.end(); it++) {
-							sock->async_connect(it->endpoint(), 
-									[sock, hosts, i](const boost::system::error_code &err)
-									{
-										if (!err) {
-											make_shared<client>(hosts[i], std::move(sock), i)->start();
-										}
-									});	
-						}
-					} else {
-						cerr << "resolv error\n";
+		tcp::endpoint ep(boost::asio::ip::address::from_string(sh), stoi(sp));
+		sock->async_connect(ep, 
+				[sock, hosts, i](const boost::system::error_code &err){
+					if (!err) {
+						make_shared<client>(hosts[i], std::move(sock), i)->start();
 					}
-				});
-
+				});	
 	}	
 	_context.run();
 }

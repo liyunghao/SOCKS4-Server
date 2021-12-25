@@ -26,11 +26,12 @@ private:
 				if (!ec) {
 					do_parse(length);
 					permit = check(res.CD, res.ip);
-
-					if (res.CD == 1) {
-						connect();
-					} else {
-						bind();
+					if (permit) {
+						if (res.CD == 1) {
+							connect();
+						} else {
+							bind();
+						}
 					}
 					msg();
 				}
@@ -53,6 +54,7 @@ private:
 			tcp::resolver::results_type result = resolver_.resolve(host, to_string(res.port), ec);
 			
 			for (auto it = result.begin(); it != result.end(); it++) {
+				cout << host << '\n';
 				res.ip = it->endpoint().address().to_string();
 			}
 		}
@@ -74,7 +76,7 @@ private:
 			reply[2] = port / 256;
 			reply[3] = port % 256;
 			cout << "<Command>: CONNECT\n";
-		} else {
+		} else if (res.CD == 2) {
 			array<unsigned char, 4> ip = socket_.local_endpoint().address().to_v4().to_bytes();
 			int port = acceptor_.local_endpoint().port();
 			for (int i = 0; i < 4; i++) {
