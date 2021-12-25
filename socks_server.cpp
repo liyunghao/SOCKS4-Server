@@ -143,7 +143,7 @@ private:
 				});
 	}
 	void readServer() {
-		cout << "read Server\n";
+		//cout << "read Server\n";
 		//string test = "test";
 		//servsock->write_some(boost::asio::buffer(test.c_str(), test.size()));
 		
@@ -151,10 +151,12 @@ private:
 		servsock.async_read_some(boost::asio::buffer(sbuf, MAXLEN), 
 				[this, self] (const boost::system::error_code &ec, size_t length) {
 					if (!ec) {
-						cerr << "readdone\n";
+						//cerr << "readdone\n";
 						writeClient(length);
 					} else {
 						cerr << ec.message() << '\n';
+						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
@@ -165,12 +167,14 @@ private:
 					if (!ec) {
 						readServer();
 					} else {
-						cerr << ec.message() << '\n';
+						cerr << "write CLient " << ec.message() << '\n';
+						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
 	void readClient() {
-		cout << "read client\n";
+		//cout << "read client\n";
 		auto self(shared_from_this());
 		socket_.async_read_some(boost::asio::buffer(cbuf, MAXLEN),
 				[this, self] (const boost::system::error_code &ec, size_t length) {
@@ -178,6 +182,8 @@ private:
 						writeServer(length);
 					} else {
 						cerr << ec.message() << '\n';
+						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	
@@ -191,6 +197,8 @@ private:
 						readClient();
 					} else {
 						cerr << ec.message() << '\n';
+						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
@@ -198,12 +206,13 @@ private:
 	tcp::socket socket_;
 	tcp::socket servsock;
 	tcp::acceptor acceptor_;
+	boost::system::error_code error;
 	bool permit;
 	uint8_t data_[MAXLEN];
 	char sbuf[MAXLEN];
 	char cbuf[MAXLEN];
 	struct parseRes res;
-	
+		
 };
 
 class server {
