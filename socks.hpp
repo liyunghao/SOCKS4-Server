@@ -30,7 +30,7 @@ struct parseRes  {
 parseRes parse (uint8_t *data_) {
 	int VN = int(data_[0]);
 	int CD = int(data_[1]);
-	cout << "CD = " << CD << '\n';
+	//cout << "CD = " << CD << '\n';
 	int port = (int(data_[2]) << 8) + int(data_[3]);
 	string ip;
 	for (int i = 4; i < 8; i++) {

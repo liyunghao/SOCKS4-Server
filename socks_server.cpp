@@ -94,9 +94,9 @@ private:
 			reply[1] = 91;
 			cout << "<Reply>: Reject\n";
 		}
-		for (int i = 0; i < 8; i++)
-			cout << int(reply[i]) << ' ';
-		cout << '\n';
+		//for (int i = 0; i < 8; i++)
+			//cout << int(reply[i]) << ' ';
+		//cout << '\n';
 		//	write reply to client
 		auto self(shared_from_this());
 		socket_.write_some(boost::asio::buffer(reply, 8)); 
@@ -157,21 +157,25 @@ private:
 						writeClient(length);
 					} else {
 						//cerr << ec.message() << '\n';
+						//servsock.cancel();
+						//servsock.close();
 						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
-						//socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
 	void writeClient(size_t length) {
 		auto self(shared_from_this());
-		socket_.async_write_some(boost::asio::buffer(sbuf, length),
+		async_write(socket_, boost::asio::buffer(sbuf, length),
 				[this, self] (const boost::system::error_code &ec, size_t length) {
 					if (!ec) {
 						readServer();
 					} else {
 						//cerr << "write CLient " << ec.message() << '\n';
-						//servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						//socket_.cancel();
+						//socket_.close();
 					}
 				});
 	}
@@ -184,8 +188,10 @@ private:
 						writeServer(length);
 					} else {
 						//cerr << ec.message() << '\n';
-						//servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						//socket_.cancel();
+						//socket_.close();
 					}
 				});
 	
@@ -193,14 +199,16 @@ private:
 
 	void writeServer(size_t length) {
 		auto self(shared_from_this());
-		servsock.async_write_some(boost::asio::buffer(cbuf, length),
+		async_write(servsock, boost::asio::buffer(cbuf, length),
 				[this, self] (const boost::system::error_code &ec, size_t length) {
 					if (!ec) {
 						readClient();
 					} else {
 						//cerr << ec.message() << '\n';
+						//servsock.cancel();
+						//servsock.close();
 						servsock.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
-						//socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+						socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
 					}
 				});
 	}
